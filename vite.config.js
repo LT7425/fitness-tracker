@@ -8,5 +8,6 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src')
     }
-  }
+  },
+  base: process.env.NODE_ENV === 'production' ? '/fitness-tracker/' : '/'
 })
