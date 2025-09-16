@@ -1,0 +1,45 @@
+{
+  "records": [
+    {
+      "date": "2023-10-10",
+      "steps": 10000,
+      "calories": 200,
+      "distance": 5,
+      "duration": 60
+    },
+    {
+      "date": "2023-10-11",
+      "steps": 8000,
+      "calories": 150,
+      "distance": 4,
+      "duration": 50
+    },
+    {
+      "date": "2023-10-13",
+      "steps": 12635,
+      "calories": 150,
+      "distance": 4,
+      "duration": 50
+    },
+    {
+      "date": "2023-10-14",
+      "steps": 6000,
+      "calories": 150,
+      "distance": 4,
+      "duration": 50
+    },
+    {
+      "date": "2023-10-15",
+      "steps": 8000,
+      "calories": 150,
+      "distance": 4,
+      "duration": 50
+    }
+  ],
+  "rewards": {
+    "small": 5,
+    "medium": 0,
+    "large": 0
+  },
+  "rewardHistory": []
+}

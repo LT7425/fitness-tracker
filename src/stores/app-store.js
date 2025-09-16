@@ -1,30 +1,28 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { calculateRewards } from '@/utils/calculator';
 
-// 简单的本地存储函数
-const loadData = () => {
+const loadData = async () => {
     try {
-        const data = localStorage.getItem('fitness-data');
-        return data ? JSON.parse(data) : {
+        // 使用fetch加载src目录下的data.json
+        const response = await fetch(new URL('../data.json', import.meta.url));
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data || {
             records: [],
             rewards: { small: 0, medium: 0, large: 0 },
             rewardHistory: []
         };
     } catch (error) {
+        console.error('加载data.json失败:', error);
+        // 加载失败时返回默认数据
         return {
             records: [],
             rewards: { small: 0, medium: 0, large: 0 },
             rewardHistory: []
         };
-    }
-};
-
-const saveData = (data) => {
-    try {
-        localStorage.setItem('fitness-data', JSON.stringify(data));
-    } catch (error) {
-        console.error('保存数据失败:', error);
     }
 };
 
@@ -36,26 +34,17 @@ export const useAppStore = defineStore('app', () => {
     const rewards = ref({ small: 0, medium: 0, large: 0 });
     const rewardHistory = ref([]);
 
-    // 初始化应用
-    const initApp = () => {
-        const data = loadData();
+    // 初始化应用 - 仅加载数据，不保存
+    const initApp = async () => {
+        const data = await loadData();
+        console.log(data);
         records.value = data.records;
         rewards.value = data.rewards;
         rewardHistory.value = data.rewardHistory;
         isAuthenticated.value = true;
     };
 
-    // 保存数据
-    const saveAppData = () => {
-        const data = {
-            records: records.value,
-            rewards: rewards.value,
-            rewardHistory: rewardHistory.value
-        };
-        saveData(data);
-    };
-
-    // 添加记录
+    // 添加记录 - 不包含保存逻辑
     const addRecord = (newRecord) => {
         const existingIndex = records.value.findIndex(r => r.date === newRecord.date);
 
@@ -68,12 +57,11 @@ export const useAppStore = defineStore('app', () => {
         // 按日期倒序排序
         records.value.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // 处理奖励
+        // 处理奖励（仅内存中计算，不保存）
         processMonthlyReward(newRecord.date.substring(0, 7));
-        saveAppData();
     };
 
-    // 处理月度奖励
+    // 处理月度奖励（仅内存中计算）
     const processMonthlyReward = (yearMonth) => {
         const { earnedSmallReward, rewardCount } = calculateRewards(records.value, yearMonth);
         const alreadyRewarded = rewardHistory.value.some(item =>
@@ -91,7 +79,7 @@ export const useAppStore = defineStore('app', () => {
         }
     };
 
-    // 兑换奖励
+    // 兑换奖励（仅内存中操作）
     const exchangeRewards = (fromType, toType) => {
         if (fromType === 'small' && toType === 'medium' && rewards.value.small >= 3) {
             rewards.value.small -= 3;
@@ -103,7 +91,6 @@ export const useAppStore = defineStore('app', () => {
                 to: 'medium',
                 message: `用3个小奖励兑换了1个中级奖励`
             });
-            saveAppData();
         }
     };
 
@@ -115,7 +102,6 @@ export const useAppStore = defineStore('app', () => {
         rewardHistory,
         initApp,
         addRecord,
-        exchangeRewards,
-        saveAppData
+        exchangeRewards
     };
 });

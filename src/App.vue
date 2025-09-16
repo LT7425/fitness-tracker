@@ -4,7 +4,6 @@
       <n-layout-header bordered>
         <n-space justify="space-between" align="center" style="padding: 0 20px; height: 60px;">
           <n-h2 style="margin: 0;">运动打卡激励平台</n-h2>
-          <Auth />
         </n-space>
       </n-layout-header>
 
