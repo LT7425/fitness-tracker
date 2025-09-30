@@ -54,7 +54,6 @@ const goRewards = () => {
 </template>
 
 <style>
-@import '@/assets/all.min.css';
 
 .rotating-nav {
   width: 100%;
