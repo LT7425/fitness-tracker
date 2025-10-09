@@ -29,10 +29,46 @@
       "sportsTime": "120",
       "distance": "4",
       "type": "walk"
+    },
+    {
+      "date": "2025-10-1",
+      "sportsTime": "120",
+      "distance": "6.4",
+      "type": "walk"
+    },
+    {
+      "date": "2025-10-2",
+      "sportsTime": "100",
+      "distance": "8.6",
+      "type": "walk"
+    },
+    {
+      "date": "2025-10-3",
+      "sportsTime": "180",
+      "distance": "15.4",
+      "type": "walk"
+    },
+    {
+      "date": "2025-10-4",
+      "sportsTime": "60",
+      "distance": "4.67",
+      "type": "walk"
+    },
+    {
+      "date": "2025-10-5",
+      "sportsTime": "90",
+      "distance": "6.44",
+      "type": "walk"
+    },
+    {
+      "date": "2025-10-6",
+      "sportsTime": "240",
+      "distance": "20.66",
+      "type": "cycling"
     }
   ],
   "rewards": {
-    "small": 5,
+    "small": 11,
     "medium": 0,
     "large": 0
   },
