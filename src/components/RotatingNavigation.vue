@@ -73,6 +73,14 @@ const goRewards = () => {
   padding: 20px;
   box-shadow: 0 8px 24px rgba(255, 182, 193, 0.25);
 }
+.rotating-nav .container:has(.home) {
+  height: 100vh;
+}
+@media screen and (max-width: 768px) {
+  .rotating-nav .container:has(.home) {
+    height: auto;
+  }
+}
 
 .rotating-nav .container.show-nav {
   transform: rotate(-20deg);

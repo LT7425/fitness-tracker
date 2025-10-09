@@ -1,5 +1,5 @@
 <template>
-  <div class="home-container">
+  <div class="home-container home">
     <!-- 欢迎信息 -->
     <div class="welcome-section">
       <h1>嗨，宝贝！<br/><span class="highlight">今天运动了吗？</span></h1>
