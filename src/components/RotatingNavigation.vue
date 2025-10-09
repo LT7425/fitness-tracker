@@ -11,7 +11,7 @@ const close = () => { showNav.value = false }
 
 const goHome = () => {
   close()
-  router.push('/')
+  router.push('/home')
 }
 const goHistory = () => {
   close()
