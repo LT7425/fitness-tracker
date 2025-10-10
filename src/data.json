@@ -65,10 +65,16 @@
       "sportsTime": "240",
       "distance": "20.66",
       "type": "cycling"
+    },
+    {
+      "date": "2025-10-9",
+      "sportsTime": "70",
+      "distance": "6",
+      "type": "walk"
     }
   ],
   "rewards": {
-    "small": 11,
+    "small": 12,
     "medium": 0,
     "large": 0
   },
