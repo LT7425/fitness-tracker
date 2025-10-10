@@ -98,11 +98,11 @@
           
           <div class="record-stats">
             <div class="stat-item">
-              <div class="stat-title">时长</div>
+              <div class="stat-title">时长（分钟）</div>
               <div class="stat-value">{{ record.sportsTime }}</div>
             </div>
             <div class="stat-item">
-              <div class="stat-title">距离</div>
+              <div class="stat-title">距离（公里）</div>
               <div class="stat-value">{{ record.distance }}</div>
             </div>
             <div class="record-actions">
@@ -368,11 +368,31 @@ const getIconClass = (type) => {
   font-size: 1.2rem;
 }
 
-.running-icon { background: #e3f2fd; color: #3B82F6; background-image: url('../../public/running.png'); background-size: cover; }
-.fitness-icon { background: #e8f5e9; color: #10B981; background-image: url('../../public/fitness.png'); background-size: cover; }
-.cycling-icon { background: #fff3cd; color: #F59E0B; background-image: url('../../public/cycling.png'); background-size: cover; }
-.swimming-icon { background: #e0f7fa; color: #06B6D4; background-image: url('../../public/swimming.png'); background-size: cover; }
-.walk-icon { background: #f3e5f5; color: #8E24AA; background-image: url('../../public/walk.png'); background-size: cover;} /* Added for walk */
+.running-icon {
+  color: #3B82F6;
+  background: #e3f2fd url('../../public/running.png');
+  background-size: cover;
+}
+.fitness-icon {
+  color: #10B981;
+  background: #e8f5e9 url('../../public/fitness.png');
+  background-size: cover;
+}
+.cycling-icon {
+  color: #F59E0B;
+  background: #fff3cd url('../../public/cycling.png');
+  background-size: cover;
+}
+.swimming-icon {
+  color: #06B6D4;
+  background: #e0f7fa url('../../public/swimming.png');
+  background-size: cover;
+}
+.walk-icon {
+  color: #8E24AA;
+  background: #f3e5f5 url('../../public/walk.png');
+  background-size: cover;
+}
 .default-icon { background: #f0f0f0; color: #666; }
 
 .record-details h3 {

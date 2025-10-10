@@ -59,7 +59,7 @@
       
       <!-- 连续打卡 -->
       <div class="stat-card">
-        <h3><i class="icon-fire"></i> 连续打卡</h3>
+        <h3><i class="icon-fire"></i> 最长连续打卡</h3>
         <div class="streak-info">
           <div class="streak-days">{{ longestMonthStreak }}</div>
           <div class="streak-label">天</div>
