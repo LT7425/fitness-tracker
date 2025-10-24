@@ -95,10 +95,16 @@
       "sportsTime": "120",
       "distance": "8",
       "type": "walk"
+    },
+    {
+      "date": "2025-10-22",
+      "sportsTime": "110",
+      "distance": "7",
+      "type": "walk"
     }
   ],
   "rewards": {
-    "small": 16,
+    "small": 17,
     "medium": 0,
     "large": 0
   },
