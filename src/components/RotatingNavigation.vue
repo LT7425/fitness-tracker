@@ -21,6 +21,10 @@ const goRewards = () => {
   close()
   router.push('/rewards')
 }
+const goHealth = () => {
+  close()
+  router.push('/health')
+}
 </script>
 
 <template>
@@ -48,6 +52,7 @@ const goRewards = () => {
         <li @click="goHome"><i class="fas fa-home"></i> 首页</li>
         <li @click="goHistory"><i class="fas fa-list"></i> 历史记录</li>
         <li @click="goRewards"><i class="fas fa-gift"></i> 奖励模块</li>
+        <li @click="goHealth"><i class="fas fa-heartbeat"></i> 健康记录</li>
       </ul>
     </nav>
   </div>
@@ -177,6 +182,10 @@ const goRewards = () => {
 .rotating-nav nav ul li + li + li {
   margin-left: 30px;
   transform: translateX(-200%);
+}
+.rotating-nav nav ul li + li + li + li {
+  margin-left: 45px;
+  transform: translateX(-250%);
 }
 
 /* 内容区 */

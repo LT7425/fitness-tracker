@@ -1,0 +1,47 @@
+{
+  "roles": [
+    {
+      "id": 1,
+      "name": "anor",
+      "avatar": ""
+    },
+    {
+      "id": 2,
+      "name": "yingying",
+      "avatar": ""
+    }
+  ],
+  "dailyRecords": [
+    {
+      "id": 1,
+      "roleId": 1,
+      "date": "2026-02-26",
+      "weight": 77.2,
+      "diet": [
+        {
+          "mealType": "breakfast",
+          "image": "",
+          "note": "牛奶,鸡蛋,包子"
+        },
+        {
+          "mealType": "lunch",
+          "image": "",
+          "note": "米饭快餐"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "roleId": 2,
+      "date": "2026-02-26",
+      "weight": 61.95,
+      "diet": [
+        {
+          "mealType": "lunch",
+          "image": "",
+          "note": "番茄+鸡蛋蒜卷饼"
+        }
+      ]
+    }
+  ]
+}
