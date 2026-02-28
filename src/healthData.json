@@ -21,17 +21,17 @@
         {
           "mealType": "breakfast",
           "image": "",
-          "note": "牛奶,鸡蛋,包子"
+          "note": "牛奶,鸡蛋*2,包子*1"
         },
         {
           "mealType": "lunch",
           "image": "",
-          "note": "米饭快餐"
+          "note": "米饭套餐(豆芽、面筋、辣椒炒肉、蒜苔)"
         }
       ]
     },
     {
-      "id": 1,
+      "id": 2,
       "roleId": 1,
       "date": "2026-02-27",
       "weight": 77.25,
@@ -39,12 +39,35 @@
         {
           "mealType": "breakfast",
           "image": "",
-          "note": "牛奶,鸡蛋,包子"
+          "note": "牛奶,鸡蛋*2,包子*1"
+        },
+        {
+          "mealType": "lunch",
+          "image": "",
+          "note": "米饭套餐(豆芽、面筋、辣椒炒肉、杏鲍菇)"
         }
       ]
     },
     {
-      "id": 2,
+      "id": 3,
+      "roleId": 1,
+      "date": "2026-02-28",
+      "weight": 77.05,
+      "diet": [
+        {
+          "mealType": "breakfast",
+          "image": "",
+          "note": "牛奶,鸡蛋*2,包子*1"
+        },
+        {
+          "mealType": "lunch",
+          "image": "",
+          "note": "茴香饺子➕芹菜饺子"
+        }
+      ]
+    },
+    {
+      "id": 4,
       "roleId": 2,
       "date": "2026-02-26",
       "weight": 61.95,
@@ -57,11 +80,30 @@
       ]
     },
     {
-      "id": 2,
+      "id": 5,
       "roleId": 2,
       "date": "2026-02-27",
       "weight": 61.25,
-      "diet": []
+      "diet": [
+        {
+          "mealType": "lunch",
+          "image": "",
+          "note": "牛肉➕米饭"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "roleId": 2,
+      "date": "2026-02-28",
+      "weight": 61.25,
+      "diet": [
+        {
+          "mealType": "lunch",
+          "image": "",
+          "note": "牛肉➕米饭"
+        }
+      ]
     }
   ]
 }
