@@ -105,7 +105,6 @@ export const useHealthStore = defineStore('health', () => {
         try {
             const newRecord = {
                 ...record,
-                role_id: currentRoleId.value,
                 created_at: new Date().toISOString()
             };
 
@@ -139,7 +138,8 @@ export const useHealthStore = defineStore('health', () => {
 
             const index = dailyRecords.value.findIndex(r => r.id === recordId);
             if (index !== -1) {
-                dailyRecords.value[index] = data;
+                // 使用splice触发响应式更新
+                dailyRecords.value.splice(index, 1, data);
             }
             return data;
         } catch (err) {

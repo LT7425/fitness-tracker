@@ -312,7 +312,7 @@ function openEditModal() {
     })) : []
   };
   showFormModal.value = true;
-  healthStore.closeDetail();
+  // 不关闭详情，保持selectedRecord可用
 }
 
 // 处理表单提交
@@ -330,6 +330,8 @@ async function handleSubmit() {
 
     if (isEditing.value) {
       await healthStore.updateRecord(editingRecordId.value, submitData);
+      // 编辑成功后关闭详情
+      healthStore.closeDetail();
     } else {
       await healthStore.addRecord(submitData);
     }
@@ -379,16 +381,18 @@ const chartOption = computed(() => {
   const allDates = [...new Set(records.map(r => r.date))].sort((a, b) => new Date(a) - new Date(b));
 
   // 为每个角色创建一个系列
-  const series = healthStore.roles.map((role, index) => {
+  const series = [];
+  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+  healthStore.roles.forEach((role, index) => {
     const roleRecords = records.filter(r => r.roleId === role.id);
     const weights = allDates.map(date => {
       const record = roleRecords.find(r => r.date === date);
       return record ? record.weight : null;
     });
 
-    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
-
-    return {
+    // 添加实际体重折线
+    series.push({
       name: role.name,
       type: 'line',
       data: weights,
@@ -403,7 +407,23 @@ const chartOption = computed(() => {
       itemStyle: {
         color: colors[index % colors.length]
       }
-    };
+    });
+
+    // 添加目标体重虚线
+    if (role.target) {
+      series.push({
+        name: `${role.name}目标`,
+        type: 'line',
+        data: allDates.map(() => role.target),
+        smooth: true,
+        symbol: 'none',
+        lineStyle: {
+          color: colors[index % colors.length],
+          width: 2,
+          type: 'dashed'
+        }
+      });
+    }
   });
 
   return {
@@ -778,7 +798,6 @@ h1 {
 .meal-images :deep(.n-image) {
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease;
 }
 
