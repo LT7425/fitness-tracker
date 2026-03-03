@@ -462,7 +462,9 @@ const chartOption = computed(() => {
     },
     yAxis: {
       type: 'value',
-      name: '体重 (kg)'
+      name: '体重 (kg)',
+      min: 50,
+      max: 80
     },
     series
   };
