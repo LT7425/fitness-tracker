@@ -25,7 +25,7 @@
                 <i class="fas fa-weight"></i>
               </div>
               <div class="stat-info">
-                <div class="stat-value-small">{{ getUserCurrentWeight(role.id) }}</div>
+                <div class="stat-value-small">{{ getUserCurrentWeight(role.id) }}Kg</div>
                 <div class="stat-label-small">当前体重</div>
               </div>
             </div>
@@ -35,9 +35,9 @@
               </div>
               <div class="stat-info">
                 <div class="stat-value-small" :class="{ 'weight-down': getUserWeightChange(role.id) < 0, 'weight-up': getUserWeightChange(role.id) > 0 }">
-                  {{ getUserWeightChange(role.id) > 0 ? '+' : '' }}{{ getUserWeightChange(role.id) }}
+                  {{ getUserWeightChange(role.id) > 0 ? '+' : '' }}{{ getUserWeightChange(role.id) }} Kg
                 </div>
-                <div class="stat-label-small">变化</div>
+                <div class="stat-label-small">较昨日变化</div>
               </div>
             </div>
             <div class="user-stat-item" v-if="role.target">
