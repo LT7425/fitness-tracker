@@ -11,45 +11,53 @@
       </div>
     </transition>
 
-    <!-- 数据统计卡片 -->
+    <!-- 数据统计卡片 - 每个用户独立显示 -->
     <transition name="slide-up">
       <div class="stats-cards" v-show="!healthStore.loading">
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-weight"></i>
+        <div v-for="role in healthStore.roles" :key="role.id" class="user-stats-card">
+          <div class="user-header">
+            <div class="user-avatar">{{ role.name.charAt(0) }}</div>
+            <h3>{{ role.name }}</h3>
           </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ currentWeight }}</div>
-            <div class="stat-label">平均体重</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-chart-line"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value" :class="{ 'weight-down': weightChange < 0, 'weight-up': weightChange > 0 }">
-              {{ weightChange > 0 ? '+' : '' }}{{ weightChange }}
+          <div class="user-stats">
+            <div class="user-stat-item">
+              <div class="stat-icon-small">
+                <i class="fas fa-weight"></i>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value-small">{{ getUserCurrentWeight(role.id) }}</div>
+                <div class="stat-label-small">当前体重</div>
+              </div>
             </div>
-            <div class="stat-label">整体变化</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-bullseye"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ targetProgress }}%</div>
-            <div class="stat-label">平均进度</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-calendar-check"></i>
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ recordCount }}</div>
-            <div class="stat-label">记录天数</div>
+            <div class="user-stat-item">
+              <div class="stat-icon-small">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value-small" :class="{ 'weight-down': getUserWeightChange(role.id) < 0, 'weight-up': getUserWeightChange(role.id) > 0 }">
+                  {{ getUserWeightChange(role.id) > 0 ? '+' : '' }}{{ getUserWeightChange(role.id) }}
+                </div>
+                <div class="stat-label-small">变化</div>
+              </div>
+            </div>
+            <div class="user-stat-item" v-if="role.target">
+              <div class="stat-icon-small">
+                <i class="fas fa-bullseye"></i>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value-small">{{ getUserTargetProgress(role.id) }}%</div>
+                <div class="stat-label-small">目标进度</div>
+              </div>
+            </div>
+            <div class="user-stat-item">
+              <div class="stat-icon-small">
+                <i class="fas fa-calendar-check"></i>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value-small">{{ getUserRecordCount(role.id) }}</div>
+                <div class="stat-label-small">记录天数</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -273,79 +281,54 @@ const roles = ref([]);
 // 日期范围筛选
 const dateRange = ref(null);
 
-// 统计数据 - 显示所有人的变化趋势
-const currentWeight = computed(() => {
-  const records = healthStore.allRoleRecords;
+// 统计数据 - 计算每个用户的统计数据
+function getUserCurrentWeight(roleId) {
+  const records = healthStore.allRoleRecords.filter(r => r.roleId === roleId);
   if (records.length === 0) return '0';
   
-  // 计算所有用户的平均体重
-  const totalWeight = records.reduce((sum, r) => sum + r.weight, 0);
-  return (totalWeight / records.length).toFixed(1);
-});
+  // 按日期排序，获取最新记录
+  records.sort((a, b) => new Date(b.date) - new Date(a.date));
+  return records[0].weight.toFixed(1);
+}
 
-const weightChange = computed(() => {
-  const records = healthStore.allRoleRecords;
+function getUserWeightChange(roleId) {
+  const records = healthStore.allRoleRecords.filter(r => r.roleId === roleId);
   if (records.length < 2) return 0;
   
   // 按日期排序
-  const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date));
+  records.sort((a, b) => new Date(b.date) - new Date(a.date));
   
-  // 计算最早和最新日期的平均体重
-  const uniqueDates = [...new Set(sortedRecords.map(r => r.date))];
-  
-  if (uniqueDates.length < 2) return 0;
-  
-  const latestDate = uniqueDates[uniqueDates.length - 1];
-  const earliestDate = uniqueDates[0];
-  
-  const latestRecords = records.filter(r => r.date === latestDate);
-  const earliestRecords = records.filter(r => r.date === earliestDate);
-  
-  const latestAvg = latestRecords.reduce((sum, r) => sum + r.weight, 0) / latestRecords.length;
-  const earliestAvg = earliestRecords.reduce((sum, r) => sum + r.weight, 0) / earliestRecords.length;
-  
-  return (latestAvg - earliestAvg).toFixed(1);
-});
+  // 计算最近两次记录的体重变化
+  const latest = records[0].weight;
+  const previous = records[1].weight;
+  return (latest - previous).toFixed(1);
+}
 
-const targetProgress = computed(() => {
-  const roles = healthStore.roles;
-  if (roles.length === 0) return 0;
+function getUserTargetProgress(roleId) {
+  const role = healthStore.roles.find(r => r.id === roleId);
+  if (!role || !role.target) return 0;
   
-  // 计算所有有目标角色的平均进度
-  let totalProgress = 0;
-  let validRoles = 0;
-  
-  roles.forEach(role => {
-    if (!role.target) return;
-    
-    const roleRecords = healthStore.allRoleRecords.filter(r => r.roleId === role.id);
-    if (roleRecords.length === 0) return;
-    
-    roleRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
-    const currentWeight = roleRecords[0].weight;
-    const initialWeight = roleRecords[roleRecords.length - 1].weight;
-    
-    const totalChange = initialWeight - role.target;
-    const currentChange = initialWeight - currentWeight;
-    
-    if (totalChange !== 0) {
-      const progress = Math.round((currentChange / totalChange) * 100);
-      totalProgress += Math.max(0, Math.min(100, progress));
-      validRoles++;
-    }
-  });
-  
-  return validRoles > 0 ? Math.round(totalProgress / validRoles) : 0;
-});
-
-const recordCount = computed(() => {
-  const records = healthStore.allRoleRecords;
+  const records = healthStore.allRoleRecords.filter(r => r.roleId === roleId);
   if (records.length === 0) return 0;
   
-  // 计算所有记录的唯一日期数
-  const uniqueDates = new Set(records.map(r => r.date));
-  return uniqueDates.size;
-});
+  // 按日期排序，获取最新记录
+  records.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const currentWeight = records[0].weight;
+  const initialWeight = records[records.length - 1].weight;
+  
+  // 计算目标进度
+  const totalChange = initialWeight - role.target;
+  const currentChange = initialWeight - currentWeight;
+  
+  if (totalChange === 0) return 0;
+  const progress = Math.round((currentChange / totalChange) * 100);
+  return Math.max(0, Math.min(100, progress));
+}
+
+function getUserRecordCount(roleId) {
+  const records = healthStore.allRoleRecords.filter(r => r.roleId === roleId);
+  return records.length;
+}
 
 // 表单相关
 const showFormModal = ref(false);
@@ -850,16 +833,6 @@ async function loadRoles() {
 </script>
 
 <style scoped>
-/* 过渡动画 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
 
 .health-container {
   max-width: 1200px;
@@ -903,72 +876,118 @@ h1 {
 /* 统计卡片样式 */
 .stats-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   margin-bottom: 20px;
 }
 
-.stat-card {
+
+/* 用户统计卡片 */
+.user-stats-card {
   background: white;
   border-radius: 12px;
   padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+.user-stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.dark-theme .stat-card {
-  background: #374151;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+.user-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.dark-theme .stat-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   color: white;
-  font-size: 1.5rem;
-  flex-shrink: 0;
+  font-weight: bold;
+  font-size: 16px;
+  text-transform: uppercase;
 }
 
-.stat-content {
+.user-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #1f2937;
+}
+
+.user-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.user-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-icon-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.stat-info {
   flex: 1;
 }
 
-.stat-value {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
-  transition: color 0.3s ease;
+.stat-value-small {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 2px;
 }
 
-.dark-theme .stat-value {
+.stat-label-small {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* 深色主题下的用户统计卡片 */
+.dark-theme .user-stats-card {
+  background: #374151;
+}
+
+.dark-theme .user-header {
+  border-bottom-color: #4b5563;
+}
+
+.dark-theme .user-header h3 {
   color: #e5e7eb;
 }
 
-.stat-label {
-  font-size: 0.9rem;
-  color: #666;
-  transition: color 0.3s ease;
+.dark-theme .stat-icon-small {
+  background: #4b5563;
+  color: #9ca3af;
 }
 
-.dark-theme .stat-label {
+.dark-theme .stat-value-small {
+  color: #e5e7eb;
+}
+
+.dark-theme .stat-label-small {
   color: #9ca3af;
 }
 
@@ -1243,26 +1262,8 @@ h1 {
   }
 
   .stats-cards {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 10px;
-  }
-
-  .stat-card {
-    padding: 15px;
-  }
-
-  .stat-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
-  }
-
-  .stat-value {
-    font-size: 1.4rem;
-  }
-
-  .stat-label {
-    font-size: 0.8rem;
   }
 }
 </style>
