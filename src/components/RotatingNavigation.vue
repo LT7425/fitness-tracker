@@ -67,11 +67,13 @@ const goHealth = () => {
   color: #222;
   overflow-x: hidden;
   position: relative;
+  transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 /* 容器与旋转 */
 .rotating-nav .container {
   background-color: #fafafa;
+  transition: background-color 0.3s ease;
   transform-origin: top left;
   transition: transform 0.5s linear;
   height: max-content;
@@ -213,5 +215,32 @@ const goHealth = () => {
 .rotating-nav .content p {
   color: #333;
   line-height: 1.5;
+}
+
+/* 深色主题样式 */
+.dark-theme .rotating-nav {
+  color: #e5e7eb;
+}
+
+.dark-theme .rotating-nav .container {
+  background-color: #1f2937;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .rotating-nav .circle {
+  background-color: #4b5563;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.dark-theme .rotating-nav .content h1 {
+  color: #e5e7eb;
+}
+
+.dark-theme .rotating-nav .content small {
+  color: #9ca3af;
+}
+
+.dark-theme .rotating-nav .content p {
+  color: #9ca3af;
 }
 </style>

@@ -77,3 +77,43 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* 深色主题样式 */
+.dark-theme {
+  color: #e5e7eb;
+  background-color: #1f2937;
+}
+
+.dark-theme a {
+  color: #60a5fa;
+}
+
+.dark-theme a:hover {
+  color: #93c5fd;
+}
+
+.dark-theme button {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark-theme h1 {
+  color: #e5e7eb;
+}
+
+.dark-theme h2 {
+  color: #e5e7eb;
+}
+
+.dark-theme h3 {
+  color: #e5e7eb;
+}
+
+.dark-theme p {
+  color: #9ca3af;
+}
+
+.dark-theme .card {
+  background-color: #374151;
+  color: #e5e7eb;
+}

@@ -1,21 +1,92 @@
 <template>
   <div class="health-container">
-    <h1>健康记录</h1>
-
-    <!-- 加载状态 -->
-    <div v-if="healthStore.loading" class="loading-container">
-      <n-spin size="large" />
+    <div class="header-section">
+      <h1>健康记录</h1>
     </div>
 
+    <!-- 加载状态 -->
+    <transition name="fade">
+      <div v-if="healthStore.loading" class="loading-container">
+        <n-spin size="large" />
+      </div>
+    </transition>
+
+    <!-- 数据统计卡片 -->
+    <transition name="slide-up">
+      <div class="stats-cards" v-show="!healthStore.loading">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-weight"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ currentWeight }}</div>
+            <div class="stat-label">平均体重</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value" :class="{ 'weight-down': weightChange < 0, 'weight-up': weightChange > 0 }">
+              {{ weightChange > 0 ? '+' : '' }}{{ weightChange }}
+            </div>
+            <div class="stat-label">整体变化</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-bullseye"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ targetProgress }}%</div>
+            <div class="stat-label">平均进度</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ recordCount }}</div>
+            <div class="stat-label">记录天数</div>
+          </div>
+        </div>
+      </div>
+    </transition>
     <!-- 体重折线图 -->
     <div class="chart-wrapper" v-show="!healthStore.loading">
       <div class="date-filter">
-        <n-date-picker
-            v-model:value="dateRange"
-            type="daterange"
-            clearable
-            @update:value="handleDateRangeChange"
-        />
+        <div class="quick-date-filters">
+          <n-button
+              size="small"
+              @click="setDateRange(7)"
+              :type="isDateRangeActive(7) ? 'primary' : 'default'"
+          >
+            7天
+          </n-button>
+          <n-button
+              size="small"
+              @click="setDateRange(30)"
+              :type="isDateRangeActive(30) ? 'primary' : 'default'"
+          >
+            30天
+          </n-button>
+          <n-button
+              size="small"
+              @click="setDateRange(90)"
+              :type="isDateRangeActive(90) ? 'primary' : 'default'"
+          >
+            90天
+          </n-button>
+          <n-button
+              size="small"
+              @click="clearDateRange"
+              :type="!dateRange ? 'primary' : 'default'"
+          >
+            全部
+          </n-button>
+        </div>
       </div>
       <div class="chart-container">
         <v-chart :option="chartOption" @click="handleChartClick" class="health-chart"></v-chart>
@@ -23,8 +94,8 @@
     </div>
 
     <!-- 操作按钮 -->
-    <div class="action-buttons" v-show="!healthStore.loading && showEdit">
-      <n-button type="primary" @click="openAddModal">
+    <div class="action-buttons" v-show="!healthStore.loading">
+      <n-button type="primary" @click="openAddModal" v-if="showEdit">
         <template #icon>
           <i class="fas fa-plus"></i>
         </template>
@@ -169,12 +240,29 @@ import { CanvasRenderer } from 'echarts/renderers';
 import { LineChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, TitleComponent, LegendComponent } from 'echarts/components';
 import VChart from 'vue-echarts';
+import * as echarts from 'echarts/core';
 
 use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, TitleComponent, LegendComponent]);
 
 const healthStore = useHealthStore();
 const route = useRoute();
 const message = useMessage();
+
+// 响应式主题状态
+const isDarkTheme = ref(document.body.classList.contains('dark-theme'));
+
+// 监听主题变化
+const observer = new MutationObserver(() => {
+  isDarkTheme.value = document.body.classList.contains('dark-theme');
+});
+
+// 开始观察body的class变化
+if (typeof window !== 'undefined') {
+  observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
+}
 
 // 检查URL参数中是否有edit
 const showEdit = computed(() => route.query.edit === 'true');
@@ -184,6 +272,80 @@ const roles = ref([]);
 
 // 日期范围筛选
 const dateRange = ref(null);
+
+// 统计数据 - 显示所有人的变化趋势
+const currentWeight = computed(() => {
+  const records = healthStore.allRoleRecords;
+  if (records.length === 0) return '0';
+  
+  // 计算所有用户的平均体重
+  const totalWeight = records.reduce((sum, r) => sum + r.weight, 0);
+  return (totalWeight / records.length).toFixed(1);
+});
+
+const weightChange = computed(() => {
+  const records = healthStore.allRoleRecords;
+  if (records.length < 2) return 0;
+  
+  // 按日期排序
+  const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // 计算最早和最新日期的平均体重
+  const uniqueDates = [...new Set(sortedRecords.map(r => r.date))];
+  
+  if (uniqueDates.length < 2) return 0;
+  
+  const latestDate = uniqueDates[uniqueDates.length - 1];
+  const earliestDate = uniqueDates[0];
+  
+  const latestRecords = records.filter(r => r.date === latestDate);
+  const earliestRecords = records.filter(r => r.date === earliestDate);
+  
+  const latestAvg = latestRecords.reduce((sum, r) => sum + r.weight, 0) / latestRecords.length;
+  const earliestAvg = earliestRecords.reduce((sum, r) => sum + r.weight, 0) / earliestRecords.length;
+  
+  return (latestAvg - earliestAvg).toFixed(1);
+});
+
+const targetProgress = computed(() => {
+  const roles = healthStore.roles;
+  if (roles.length === 0) return 0;
+  
+  // 计算所有有目标角色的平均进度
+  let totalProgress = 0;
+  let validRoles = 0;
+  
+  roles.forEach(role => {
+    if (!role.target) return;
+    
+    const roleRecords = healthStore.allRoleRecords.filter(r => r.roleId === role.id);
+    if (roleRecords.length === 0) return;
+    
+    roleRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const currentWeight = roleRecords[0].weight;
+    const initialWeight = roleRecords[roleRecords.length - 1].weight;
+    
+    const totalChange = initialWeight - role.target;
+    const currentChange = initialWeight - currentWeight;
+    
+    if (totalChange !== 0) {
+      const progress = Math.round((currentChange / totalChange) * 100);
+      totalProgress += Math.max(0, Math.min(100, progress));
+      validRoles++;
+    }
+  });
+  
+  return validRoles > 0 ? Math.round(totalProgress / validRoles) : 0;
+});
+
+const recordCount = computed(() => {
+  const records = healthStore.allRoleRecords;
+  if (records.length === 0) return 0;
+  
+  // 计算所有记录的唯一日期数
+  const uniqueDates = new Set(records.map(r => r.date));
+  return uniqueDates.size;
+});
 
 // 表单相关
 const showFormModal = ref(false);
@@ -362,6 +524,43 @@ function handleDateRangeChange(value) {
   // 日期范围变化时，chartOption会自动重新计算
 }
 
+// 快速设置日期范围
+function setDateRange(days) {
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  
+  dateRange.value = [
+    startDate.getTime(),
+    endDate.getTime()
+  ];
+}
+
+// 检查日期范围是否激活
+function isDateRangeActive(days) {
+  if (!dateRange.value || !dateRange.value[0] || !dateRange.value[1]) {
+    return false;
+  }
+  
+  const startDate = new Date(dateRange.value[0]);
+  const endDate = new Date(dateRange.value[1]);
+  const today = new Date();
+  
+  // 计算日期差
+  const diffTime = Math.abs(endDate - startDate);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  // 检查结束日期是否是今天
+  const isToday = endDate.toDateString() === today.toDateString();
+  
+  return isToday && diffDays === days;
+}
+
+// 清除日期范围
+function clearDateRange() {
+  dateRange.value = null;
+}
+
 
 // 图表配置
 const chartOption = computed(() => {
@@ -383,6 +582,11 @@ const chartOption = computed(() => {
   // 为每个角色创建一个系列
   const series = [];
   const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+  // 根据主题设置图表颜色 - 使用响应式检测
+  const textColor = isDarkTheme.value ? '#e5e7eb' : '#374151';
+  const gridColor = isDarkTheme.value ? '#374151' : '#e5e7eb';
+  const backgroundColor = isDarkTheme.value ? '#1f2937' : '#ffffff';
 
   healthStore.roles.forEach((role, index) => {
     const roleRecords = records.filter(r => r.roleId === role.id);
@@ -406,6 +610,14 @@ const chartOption = computed(() => {
       },
       itemStyle: {
         color: colors[index % colors.length]
+      },
+      // 添加区域渐变效果
+      areaStyle: {
+        opacity: 0.1,
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: colors[index % colors.length] },
+          { offset: 1, color: 'rgba(255, 255, 255, 0)' }
+        ])
       }
     });
 
@@ -427,13 +639,22 @@ const chartOption = computed(() => {
   });
 
   return {
+    backgroundColor,
     title: {
       text: '体重变化趋势',
-      left: 'left'
+      left: 'left',
+      textStyle: {
+        color: textColor
+      }
     },
     tooltip: {
       trigger: 'axis',
       show: !isMobile,
+      backgroundColor: isDarkTheme.value ? '#374151' : '#ffffff',
+      borderColor: isDarkTheme.value ? '#4b5563' : '#e5e7eb',
+      textStyle: {
+        color: textColor
+      },
       formatter: (params) => {
         let result = `${params[0].name}<br/>`;
         params.forEach(param => {
@@ -446,7 +667,10 @@ const chartOption = computed(() => {
     },
     legend: {
       data: healthStore.roles.map(r => r.name),
-      top: 30
+      top: 30,
+      textStyle: {
+        color: textColor
+      }
     },
     grid: {
       left: '3%',
@@ -458,13 +682,38 @@ const chartOption = computed(() => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: allDates
+      data: allDates,
+      axisLine: {
+        lineStyle: {
+          color: gridColor
+        }
+      },
+      axisLabel: {
+        color: textColor
+      }
     },
     yAxis: {
       type: 'value',
       name: '体重 (kg)',
       min: 50,
-      max: 80
+      max: 80,
+      nameTextStyle: {
+        color: textColor
+      },
+      axisLine: {
+        lineStyle: {
+          color: gridColor
+        }
+      },
+      axisLabel: {
+        color: textColor
+      },
+      splitLine: {
+        lineStyle: {
+          color: gridColor,
+          type: 'dashed'
+        }
+      }
     },
     series
   };
@@ -601,17 +850,47 @@ async function loadRoles() {
 </script>
 
 <style scoped>
+/* 过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .health-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
   height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 深色主题样式 */
+.health-container.dark-theme {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
 h1 {
   font-size: 2rem;
   margin-bottom: 20px;
   color: #333;
+  transition: color 0.3s ease;
+}
+
+.dark-theme h1 {
+  color: #e5e7eb;
 }
 
 .loading-container {
@@ -619,6 +898,86 @@ h1 {
   justify-content: center;
   align-items: center;
   min-height: 400px;
+}
+
+/* 统计卡片样式 */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.dark-theme .stat-card {
+  background: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+  transition: color 0.3s ease;
+}
+
+.dark-theme .stat-value {
+  color: #e5e7eb;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.dark-theme .stat-label {
+  color: #9ca3af;
+}
+
+.weight-down {
+  color: #10B981 !important;
+}
+
+.weight-up {
+  color: #EF4444 !important;
 }
 
 .action-buttons {
@@ -640,6 +999,11 @@ h1 {
 .diet-section h3 {
   margin-bottom: 15px;
   color: #333;
+  transition: color 0.3s ease;
+}
+
+.dark-theme .diet-section h3 {
+  color: #e5e7eb;
 }
 
 .meal-form-item {
@@ -647,6 +1011,11 @@ h1 {
   padding: 15px;
   background: #f9fafb;
   border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.dark-theme .meal-form-item {
+  background: #374151;
 }
 
 .form-footer {
@@ -655,11 +1024,163 @@ h1 {
   gap: 10px;
 }
 
+
+.role-selector label {
+  font-weight: 500;
+  color: #555;
+}
+
+.chart-wrapper {
+  margin-top: 50px;
+  position: relative;
+}
+
+.date-filter {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  width: 220px;
+}
+
+.quick-date-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+/* 深色主题下的快速日期筛选按钮 */
+.dark-theme .quick-date-filters button {
+  color: #e5e7eb;
+  border-color: #4b5563;
+  background-color: #374151;
+}
+
+.dark-theme .quick-date-filters button:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+.dark-theme .quick-date-filters button.n-button--primary-type {
+  background-color: #3B82F6;
+  border-color: #3B82F6;
+  color: #ffffff;
+}
+
+.chart-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 45px 20px 20px 20px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dark-theme .chart-container {
+  background: #374151;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.health-chart {
+  height: 400px;
+  width: 100%;
+}
+
+.detail-content {
+  padding: 10px 0;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: #333;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 8px;
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark-theme .detail-section h3 {
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+.detail-section p {
+  margin: 8px 0;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.dark-theme .detail-section p {
+  color: #9ca3af;
+}
+
+.meal-item {
+  margin: 15px 0;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.dark-theme .meal-item {
+  background: #374151;
+}
+
+.meal-item h4 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  color: #333;
+  transition: color 0.3s ease;
+}
+
+.dark-theme .meal-item h4 {
+  color: #e5e7eb;
+}
+
+.meal-note {
+  margin: 8px 0;
+  color: #666;
+  line-height: 1.5;
+  transition: color 0.3s ease;
+}
+
+.dark-theme .meal-note {
+  color: #9ca3af;
+}
+
+.meal-images {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.meal-images :deep(.n-image) {
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.meal-images :deep(.n-image:hover) {
+  transform: scale(1.02);
+}
+
+
 /* 移动端适配 */
 @media (max-width: 768px) {
   .health-container {
     padding: 10px;
     overflow-x: hidden;
+  }
+
+  .dark-theme.health-container {
+    padding: 10px;
   }
 
   body {
@@ -674,16 +1195,27 @@ h1 {
 
   .chart-wrapper {
     margin-top: 0 !important;
-    padding-top: 60px;
+    padding-top: 45px;
   }
 
   .date-filter {
     position: absolute;
     top: 0;
-    right: 10px;
-    left: 10px;
+    right: 0;
+    left: 0;
     z-index: 10;
+    width: 100%;
     overflow-x: hidden;
+  }
+
+  .quick-date-filters {
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .quick-date-filters button {
+    flex: 1;
+    min-width: 60px;
   }
 
   .date-filter :deep(.n-date-picker) {
@@ -709,101 +1241,28 @@ h1 {
   .action-buttons {
     flex-direction: column;
   }
-}
 
-.role-selector {
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+  .stats-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
 
-.role-selector label {
-  font-weight: 500;
-  color: #555;
-}
+  .stat-card {
+    padding: 15px;
+  }
 
-.chart-wrapper {
-  margin-top: 50px;
-  position: relative;
-}
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
 
-.date-filter {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 10;
-  width: 220px;
-}
+  .stat-value {
+    font-size: 1.4rem;
+  }
 
-.chart-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  padding: 20px;
-}
-
-.health-chart {
-  height: 400px;
-  width: 100%;
-}
-
-.detail-content {
-  padding: 10px 0;
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-.detail-section {
-  margin-bottom: 20px;
-}
-
-.detail-section h3 {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
-  color: #333;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 8px;
-}
-
-.detail-section p {
-  margin: 8px 0;
-  color: #666;
-}
-
-.meal-item {
-  margin: 15px 0;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 8px;
-}
-
-.meal-item h4 {
-  font-size: 1rem;
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.meal-note {
-  margin: 8px 0;
-  color: #666;
-  line-height: 1.5;
-}
-
-.meal-images {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
-}
-
-.meal-images :deep(.n-image) {
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.2s ease;
-}
-
-.meal-images :deep(.n-image:hover) {
-  transform: scale(1.02);
+  .stat-label {
+    font-size: 0.8rem;
+  }
 }
 </style>
