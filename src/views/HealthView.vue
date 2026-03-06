@@ -68,6 +68,13 @@
         <div class="quick-date-filters">
           <n-button
               size="small"
+              @click="setDateRange(3)"
+              :type="isDateRangeActive(3) ? 'primary' : 'default'"
+          >
+            3天
+          </n-button>
+          <n-button
+              size="small"
               @click="setDateRange(7)"
               :type="isDateRangeActive(7) ? 'primary' : 'default'"
           >
@@ -759,6 +766,11 @@ onMounted(() => {
   healthStore.loadData();
   if (showEdit.value) {
     loadRoles();
+  }
+
+  // 移动端默认选择3天
+  if (isMobile) {
+    setDateRange(3);
   }
 });
 
