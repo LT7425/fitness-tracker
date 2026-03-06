@@ -82,17 +82,17 @@
           </n-button>
           <n-button
               size="small"
+              @click="setDateRange(15)"
+              :type="isDateRangeActive(15) ? 'primary' : 'default'"
+          >
+            15天
+          </n-button>
+          <n-button
+              size="small"
               @click="setDateRange(30)"
               :type="isDateRangeActive(30) ? 'primary' : 'default'"
           >
             30天
-          </n-button>
-          <n-button
-              size="small"
-              @click="setDateRange(90)"
-              :type="isDateRangeActive(90) ? 'primary' : 'default'"
-          >
-            90天
           </n-button>
           <n-button
               size="small"
@@ -248,7 +248,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useHealthStore } from '@/stores/health';
 import { supabase, TABLES } from '@/utils/supabase';
-import { NModal, NImage, NSelect, NDatePicker, NButton, NForm, NFormItem, NInputNumber, NInput, NAlert, NSpin, NCard, NDivider, NUpload, useMessage } from 'naive-ui';
+import { NModal, NImage, NSelect, NDatePicker, NButton, NForm, NFormItem, NInputNumber, NInput, NSpin, NUpload, useMessage } from 'naive-ui';
 import { useRoute } from 'vue-router';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
@@ -507,11 +507,6 @@ async function handleDelete() {
       console.error('删除失败:', error);
     }
   }
-}
-
-// 日期范围变化处理
-function handleDateRangeChange(value) {
-  // 日期范围变化时，chartOption会自动重新计算
 }
 
 // 快速设置日期范围
@@ -1115,6 +1110,7 @@ h1 {
 .health-chart {
   height: 400px;
   width: 100%;
+  z-index: 999;
 }
 
 .detail-content {
